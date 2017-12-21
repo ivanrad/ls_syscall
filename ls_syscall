@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# Return a list of syscalls (SYS_xxx and number) from syscall.h
+# Usage:
+#   ls_syscall [/path/to/syscall.h]
+#
+
+set -e -o pipefail
+
+syscall_def=$1
+: ${syscall_def:=/usr/include/syscall.h}
+
+if [ ! -f $syscall_def ]; then
+    echo "missing $syscall_def. aborting"
+    exit 1
+fi
+
+gcc -E -dD $syscall_def | grep -E "#define (SYS_|__NR)" | cut -d' ' -f2- |
+awk '
+    { m[$1]=$2 }
+    END { for (k in m)
+            if (k ~ /^SYS_/) print(k, m[m[k]]) }'
